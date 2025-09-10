@@ -10,14 +10,33 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+function getRandomMovieName(i) {
+  const adjectives = [
+    'Amazing', 'Lost', 'Secret', 'Dark', 'Funny', 'Epic', 'Silent', 'Wild', 'Hidden', 'Brave',
+    'Golden', 'Mysterious', 'Crazy', 'Legendary', 'Magic', 'Dangerous', 'Royal', 'Broken', 'Last', 'First'
+  ];
+  const nouns = [ 
+    'Journey', 'Night', 'Dream', 'Hero', 'World', 'Legend', 'Quest', 'Shadow', 'Star', 'Mystery',
+    'King', 'Queen', 'River', 'Forest', 'City', 'Story', 'Promise', 'Battle', 'Light', 'Game'
+  ];
+  // Use i for deterministic seed, so titles are stable per id
+  const adj = adjectives[i % adjectives.length];
+  const noun = nouns[(i * 3) % nouns.length];
+  return `${adj} ${noun}`;
+}
+
+function generateMovies(total) {
+  return Array.from({ length: total }).map((_, i) => ({
+    id: i + 1,
+    title: getRandomMovieName(i),
+    year: 1980 + ((i * 7) % 45),
+    poster: `https://picsum.photos/seed/m${i + 1}/300/450`
+  }));
+}
+
 // —— יצירת "דאטה״ מזויפת של סרטים ——
 const TOTAL = 500;
-const movies = Array.from({ length: TOTAL }).map((_, i) => ({
-  id: i + 1,
-  title: `Movie #${i + 1}`,
-  year: 1980 + ((i * 7) % 45),
-  poster: `https://picsum.photos/seed/m${i + 1}/300/450`
-}));
+const movies = generateMovies(TOTAL);
 
 // עזרתון קטן ל"שינה" כדי לדמות רשת איטית
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));

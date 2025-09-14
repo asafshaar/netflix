@@ -80,5 +80,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(clientDist, 'index.html'));
 });
 
-const PORT = process.env.PORT || 5174; // בחר פורט נפרד מ-5173 של Vite
-app.listen(PORT, () => console.log(`API + Static server listening on http://localhost:${PORT}`));
+// const PORT = process.env.PORT || 5174; // בחר פורט נפרד מ-5173 של Vite
+// app.listen(PORT, () => console.log(`API + Static server listening on http://localhost:${PORT}`));
+
+module.exports = app;

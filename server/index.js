@@ -2,7 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
+import { getMovies } from "./db.js";
+import { validateUrl } from "./validateUrl.js";
+// const { getMovies } = require("./db"); 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -10,33 +12,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-function getRandomMovieName(i) {
-  const adjectives = [
-    'Amazing', 'Lost', 'Secret', 'Dark', 'Funny', 'Epic', 'Silent', 'Wild', 'Hidden', 'Brave',
-    'Golden', 'Mysterious', 'Crazy', 'Legendary', 'Magic', 'Dangerous', 'Royal', 'Broken', 'Last', 'First'
-  ];
-  const nouns = [ 
-    'Journey', 'Night', 'Dream', 'Hero', 'World', 'Legend', 'Quest', 'Shadow', 'Star', 'Mystery',
-    'King', 'Queen', 'River', 'Forest', 'City', 'Story', 'Promise', 'Battle', 'Light', 'Game'
-  ];
-  // Use i for deterministic seed, so titles are stable per id
-  const adj = adjectives[i % adjectives.length];
-  const noun = nouns[(i * 3) % nouns.length];
-  return `${adj} ${noun}`;
-}
-
-function generateMovies(total) {
-  return Array.from({ length: total }).map((_, i) => ({
-    id: i + 1,
-    title: getRandomMovieName(i),
-    year: 1980 + ((i * 7) % 45),
-    poster: `https://picsum.photos/seed/m${i + 1}/300/450`
-  }));
-}
-
 // —— יצירת "דאטה״ מזויפת של סרטים ——
-const TOTAL = 500;
-const movies = generateMovies(TOTAL);
 
 // עזרתון קטן ל"שינה" כדי לדמות רשת איטית
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -50,24 +26,21 @@ app.get('/api/movies', async (req, res) => {
   const limit = Math.min(Math.max(parseInt(req.query.limit || '20', 10), 1), 100);
   const search = (req.query.search || '').toString().trim().toLowerCase();
 
-  let filtered = movies;
-  if (search) {
-    filtered = movies.filter(m => m.title.toLowerCase().includes(search));
-  }
+   const results = await getMovies(page, limit, search);
 
-  const start = (page - 1) * limit;
-  const end = start + limit;
-
-  const pageItems = filtered.slice(start, end);
-  const total = filtered.length;
-  const totalPages = Math.ceil(total / limit);
+   results.data = await Promise.all(results.data.map(async (movie) => {
+    movie.poster = await validateUrl(movie.poster);
+     // וידוא שה-URL של הפוסטר תקין, אחרת להחליף ב-placeholder
+     // movie.poster = await validateUrl(movie.poster);
+     return movie;
+   }));
 
   res.json({
-    page,
-    limit,
-    total,
-    totalPages,
-    items: pageItems
+    page: results.page,
+    limit:results.limit,
+    total: results.total,
+    totalPages: results.totalPages,
+    items: results.data
   });
 });
 
